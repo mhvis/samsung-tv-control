@@ -1,46 +1,38 @@
-# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
+# Java.gitignore
 
-*.iml
+*.class
 
-## Directory-based project format:
-.idea/
-# if you remove the above rule, at least ignore the following:
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
 
-# User-specific stuff:
-# .idea/workspace.xml
-# .idea/tasks.xml
-# .idea/dictionaries
+# Package Files #
+*.jar
+*.war
+*.ear
 
-# Sensitive or high-churn files:
-# .idea/dataSources.ids
-# .idea/dataSources.xml
-# .idea/sqlDataSources.xml
-# .idea/dynamic.xml
-# .idea/uiDesigner.xml
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
 
-# Gradle:
-# .idea/gradle.xml
-# .idea/libraries
 
-# Mongo Explorer plugin:
-# .idea/mongoSettings.xml
+# Gradle.gitignore
 
-## File-based project format:
-*.ipr
-*.iws
+.gradle
+build/
 
-## Plugin-specific files:
+# Ignore Gradle GUI config
+gradle-app.setting
 
-# IntelliJ
-out/
 
-# mpeltonen/sbt-idea plugin
-.idea_modules/
+# NetBeans.gitignore
 
-# JIRA plugin
-atlassian-ide-plugin.xml
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+nbactions.xml
+nb-configuration.xml
 
-# Crashlytics plugin (for Android Studio and IntelliJ)
-com_crashlytics_export_strings.xml
-crashlytics.properties
-crashlytics-build.properties
+
+# Additions
+.nb-gradle/

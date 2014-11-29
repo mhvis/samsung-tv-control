@@ -4,6 +4,7 @@ package net.afiake.samsungtvcontrol;
  * A list of available key codes, just for easy reference. Can be passed to the {@link SamsungTVControl#keyCode(KeyCode)} method.
  */
 public enum KeyCode {
+
     KEY_0,
     KEY_1,
     KEY_2,

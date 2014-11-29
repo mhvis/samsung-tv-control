@@ -13,8 +13,10 @@ import java.util.Base64;
  * API for controlling Samsung TVs using a socket connection on port 55000.
  */
 public class SamsungTVControl {
+
     // Protocol infomation has been gathered from: http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/
     // TODO: device discovery using http://www.lewisbenge.net/2012/11/13/device-discovery-ssdp-in-windows-8-and-winrt/
+
     private static final int PORT = 55000;
 
     private final String controllerId; // Unique ID which is used at Samsung TV internally to distinguish controllers
@@ -26,6 +28,7 @@ public class SamsungTVControl {
 
     /**
      * Opens a socket connection to given host (a Samsung Smart TV).
+     *
      * @param controllerId a unique ID which is used at the Samsung TV internally to distinguish controllers
      * @param controllerName the name for this controller, which is displayed on the television
      * @param host the ip-address to connect to
@@ -44,6 +47,7 @@ public class SamsungTVControl {
 
     /**
      * Tries to authenticate with the television, has to be run every time when a new socket connection has been made, prior to sending key codes.
+     *
      * @throws IOException there was a problem with the socket connection
      * @throws AuthenticationException the television user denied our control request
      */
@@ -66,8 +70,8 @@ public class SamsungTVControl {
         payload_id = encoder.encode(controllerId.getBytes());
         payload_name = encoder.encode(controllerName.getBytes());
 
-        payload_size = 2+2+payload_ip.length+2+payload_id.length+2+payload_name.length; // Getting sizes
-        size = 1+2+string.length+2+payload_size;
+        payload_size = 2 + 2 + payload_ip.length + 2 + payload_id.length + 2 + payload_name.length; // Getting sizes
+        size = 1 + 2 + string.length + 2 + payload_size;
         outBuf = ByteBuffer.allocateDirect(size); // Allocate buffer using size
         outBuf.order(ByteOrder.LITTLE_ENDIAN); // Little-endian order for the bytes
         outBuf.put((byte) 0);
@@ -116,6 +120,7 @@ public class SamsungTVControl {
 
     /**
      * Sends a keycode over current socket connection. Only works when you are successfully authenticated.
+     *
      * @param keyCode the keycode to send
      * @throws IOException there was a problem with the socket connection
      */
@@ -125,6 +130,7 @@ public class SamsungTVControl {
 
     /**
      * Sends a keycode over current socket connection. Only works when you are successfully authenticated.
+     *
      * @param keyCode the keycode to send
      * @throws IOException there was a problem with the socket connection
      */
@@ -143,8 +149,8 @@ public class SamsungTVControl {
         string = stringText.getBytes(); // Gathering all byte arrays
         payload = encoder.encode(keyCode.getBytes());
 
-        payload_size = 3+2+payload.length; // Getting sizes
-        size = 1+2+string.length+2+payload_size;
+        payload_size = 3 + 2 + payload.length; // Getting sizes
+        size = 1 + 2 + string.length + 2 + payload_size;
         outBuf = ByteBuffer.allocateDirect(size); // Allocate buffer using size
         outBuf.order(ByteOrder.LITTLE_ENDIAN); // Little-endian order for the bytes
         outBuf.put((byte) 0);
