@@ -9,4 +9,4 @@ Apidocs location: https://afiake.github.io/samsung-tv-control/javadoc/
 
 ## Builds
 
-Builds which can be used can be found here: https://github.com/Afiake/samsung-tv-control/releases
+The latest build can be found here: https://github.com/Afiake/samsung-tv-control/releases/latest
