@@ -13,10 +13,11 @@ import java.util.Base64;
  * API for controlling Samsung TVs using a socket connection on port 55000.
  */
 public class SamsungTVControl {
-    // See: http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/
+    // Protocol infomation has been gathered from: http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/
+    // TODO: device discovery using http://www.lewisbenge.net/2012/11/13/device-discovery-ssdp-in-windows-8-and-winrt/
     private static final int PORT = 55000;
-    private static final String CONTROLLER_ID = "pebble";
-    private static final String CONTROLLER_NAME = "Pebble";
+    private static final String CONTROLLER_ID = "pebble"; // Unique ID which is used at Samsung TV internally to distinguish controllers
+    private static final String CONTROLLER_NAME = "Pebble"; // Name for this controller, which is displayed on the television
 
     private Socket socket;
     private OutputStream out;
@@ -28,14 +29,16 @@ public class SamsungTVControl {
      * @param host the ip-address to connect to
      */
     public SamsungTVControl(String host) throws IOException {
-
         socket = new Socket(host, PORT);
         out = socket.getOutputStream();
         in = socket.getInputStream();
         encoder = Base64.getEncoder();
     }
 
-
+    /**
+     * Tries to authenticate with the television, has to be run every time when a new socket connection has been made, prior to sending key codes.
+     * @throws Exception
+     */
     public void authenticate() throws Exception {
 
         String stringText = "iphone.iapp.samsung";
