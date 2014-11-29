@@ -16,9 +16,9 @@ public class SamsungTVControl {
     // Protocol infomation has been gathered from: http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/
     // TODO: device discovery using http://www.lewisbenge.net/2012/11/13/device-discovery-ssdp-in-windows-8-and-winrt/
     private static final int PORT = 55000;
-    private static final String CONTROLLER_ID = "pebble"; // Unique ID which is used at Samsung TV internally to distinguish controllers
-    private static final String CONTROLLER_NAME = "Pebble"; // Name for this controller, which is displayed on the television
 
+    private final String controllerId; // Unique ID which is used at Samsung TV internally to distinguish controllers
+    private final String controllerName; // Name for this controller, which is displayed on the television
     private Socket socket;
     private OutputStream out;
     private InputStream in;
@@ -26,22 +26,28 @@ public class SamsungTVControl {
 
     /**
      * Opens a socket connection to given host (a Samsung Smart TV).
+     * @param controllerId a unique ID which is used at the Samsung TV internally to distinguish controllers
+     * @param controllerName the name for this controller, which is displayed on the television
      * @param host the ip-address to connect to
+     * @throws IOException there was a problem with the socket connection
+     * @throws AuthenticationException the television user denied our control request
      */
-    public SamsungTVControl(String host) throws IOException {
-        socket = new Socket(host, PORT);
-        out = socket.getOutputStream();
-        in = socket.getInputStream();
-        encoder = Base64.getEncoder();
+    public SamsungTVControl(String controllerId, String controllerName, String host) throws IOException, AuthenticationException {
+        this.controllerId = controllerId;
+        this.controllerName = controllerName;
+        this.socket = new Socket(host, PORT);
+        this.out = socket.getOutputStream();
+        this.in = socket.getInputStream();
+        this.encoder = Base64.getEncoder();
+        authenticate();
     }
 
     /**
      * Tries to authenticate with the television, has to be run every time when a new socket connection has been made, prior to sending key codes.
-     * @throws IOException when there was a problem with the socket connection
-     * @throws AuthenticationException when the television user denied our control request
+     * @throws IOException there was a problem with the socket connection
+     * @throws AuthenticationException the television user denied our control request
      */
-    public void authenticate() throws IOException, AuthenticationException {
-
+    private void authenticate() throws IOException, AuthenticationException {
         String stringText = "iphone.iapp.samsung";
 
         byte[] string; // String byte array
@@ -55,11 +61,10 @@ public class SamsungTVControl {
         short len;
         String resString;
 
-
         string = stringText.getBytes(); // Gathering all byte arrays
         payload_ip = encoder.encode(socket.getLocalAddress().getAddress());
-        payload_id = encoder.encode(CONTROLLER_ID.getBytes());
-        payload_name = encoder.encode(CONTROLLER_NAME.getBytes());
+        payload_id = encoder.encode(controllerId.getBytes());
+        payload_name = encoder.encode(controllerName.getBytes());
 
         payload_size = 2+2+payload_ip.length+2+payload_id.length+2+payload_name.length; // Getting sizes
         size = 1+2+string.length+2+payload_size;
@@ -82,7 +87,6 @@ public class SamsungTVControl {
         res = new byte[outBuf.remaining()]; // Put buffer in 'res' byte array
         outBuf.get(res);
         out.write(res); // Write byte array to socket
-
 
         // Reader
         do {
@@ -108,11 +112,23 @@ public class SamsungTVControl {
         if (res[0] == 100 && res[2] == 0) {
             throw new AuthenticationException("Access denied! User rejected this controller.");
         }
-        System.out.println("Access granted!");
     }
 
+    /**
+     * Sends a keycode over current socket connection. Only works when you are successfully authenticated.
+     * @param keyCode the keycode to send
+     * @throws IOException there was a problem with the socket connection
+     */
+    public void keyCode(KeyCode keyCode) throws IOException {
+        keyCode(keyCode.name());
+    }
 
-    public void keyCode(String keyCode) throws Exception {
+    /**
+     * Sends a keycode over current socket connection. Only works when you are successfully authenticated.
+     * @param keyCode the keycode to send
+     * @throws IOException there was a problem with the socket connection
+     */
+    public void keyCode(String keyCode) throws IOException {
         String stringText = "iphone.iapp.samsung";
 
         byte[] string; // String byte array
@@ -123,7 +139,6 @@ public class SamsungTVControl {
         byte[] res;
         short len;
         String resString;
-
 
         string = stringText.getBytes(); // Gathering all byte arrays
         payload = encoder.encode(keyCode.getBytes());
@@ -142,12 +157,10 @@ public class SamsungTVControl {
         outBuf.putShort((short) payload.length);
         outBuf.put(payload);
 
-
         outBuf.rewind();
         res = new byte[outBuf.remaining()]; // Put buffer in 'res' byte array
         outBuf.get(res);
         out.write(res); // Write byte array to socket
-
 
         // Reader
         System.out.println(Integer.toHexString(in.read()));
