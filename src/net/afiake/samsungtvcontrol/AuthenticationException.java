@@ -5,4 +5,7 @@ package net.afiake.samsungtvcontrol;
  * or on timeout or cancel.
  */
 public class AuthenticationException extends Exception {
+    public AuthenticationException(String message) {
+        super(message);
+    }
 }
