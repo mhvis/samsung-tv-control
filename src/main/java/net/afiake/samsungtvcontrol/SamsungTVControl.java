@@ -33,9 +33,9 @@ public class SamsungTVControl {
      * @param controllerName the name for this controller, which is displayed on the television
      * @param host the ip-address to connect to
      * @throws IOException there was a problem with the socket connection
-     * @throws TvAuthenticationException the television user denied our control request
+     * @throws AuthenticationException the television user denied our control request
      */
-    public SamsungTVControl(String controllerId, String controllerName, String host) throws IOException, TvAuthenticationException {
+    public SamsungTVControl(String controllerId, String controllerName, String host) throws IOException, AuthenticationException {
         this.controllerId = controllerId;
         this.controllerName = controllerName;
         this.socket = new Socket(host, PORT);
@@ -49,9 +49,9 @@ public class SamsungTVControl {
      * Tries to authenticate with the television, has to be run every time when a new socket connection has been made, prior to sending key codes.
      *
      * @throws IOException there was a problem with the socket connection
-     * @throws TvAuthenticationException the television user denied our control request
+     * @throws AuthenticationException the television user denied our control request
      */
-    private void authenticate() throws IOException, TvAuthenticationException {
+    private void authenticate() throws IOException, AuthenticationException {
         String stringText = "iphone.iapp.samsung";
 
         byte[] string; // String byte array
@@ -111,10 +111,10 @@ public class SamsungTVControl {
             System.out.println(Arrays.toString(res));
         } while (res[0] == 10);
         if (res[0] == 101) {
-            throw new TvAuthenticationException("Authentication timeout or cancelled by user.");
+            throw new AuthenticationException("Authentication timeout or cancelled by user.");
         }
         if (res[0] == 100 && res[2] == 0) {
-            throw new TvAuthenticationException("Access denied! User rejected this controller.");
+            throw new AuthenticationException("Access denied! User rejected this controller.");
         }
     }
 
