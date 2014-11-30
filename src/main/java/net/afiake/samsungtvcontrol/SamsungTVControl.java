@@ -7,7 +7,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.Base64;
+import org.apache.commons.codec.binary.Base64;
 
 /**
  * API for controlling Samsung TVs using a socket connection on port 55000.
@@ -24,7 +24,6 @@ public class SamsungTVControl {
     private Socket socket;
     private OutputStream out;
     private InputStream in;
-    private Base64.Encoder encoder;
 
     /**
      * Opens a socket connection to given host (a Samsung Smart TV).
@@ -41,7 +40,6 @@ public class SamsungTVControl {
         this.socket = new Socket(host, PORT);
         this.out = socket.getOutputStream();
         this.in = socket.getInputStream();
-        this.encoder = Base64.getEncoder();
         authenticate();
     }
 
@@ -66,9 +64,9 @@ public class SamsungTVControl {
         String resString;
 
         string = stringText.getBytes(); // Gathering all byte arrays
-        payload_ip = encoder.encode(socket.getLocalAddress().getAddress());
-        payload_id = encoder.encode(controllerId.getBytes());
-        payload_name = encoder.encode(controllerName.getBytes());
+        payload_ip = Base64.encodeBase64(socket.getLocalAddress().getAddress());
+        payload_id = Base64.encodeBase64(controllerId.getBytes());
+        payload_name = Base64.encodeBase64(controllerName.getBytes());
 
         payload_size = 2 + 2 + payload_ip.length + 2 + payload_id.length + 2 + payload_name.length; // Getting sizes
         size = 1 + 2 + string.length + 2 + payload_size;
@@ -147,7 +145,7 @@ public class SamsungTVControl {
         String resString;
 
         string = stringText.getBytes(); // Gathering all byte arrays
-        payload = encoder.encode(keyCode.getBytes());
+        payload = Base64.encodeBase64(keyCode.getBytes());
 
         payload_size = 3 + 2 + payload.length; // Getting sizes
         size = 1 + 2 + string.length + 2 + payload_size;
