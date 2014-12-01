@@ -1,7 +1,7 @@
 package net.afiake.samsungtvcontrol;
 
 /**
- * A list of available key codes, just for easy reference. Can be passed to the {@link SamsungTVControl#keyCode(KeyCode)} method.
+ * A list of available key codes, just for easy reference. Can be passed to the {@link SmartRemote#keyCode(KeyCode)} method.
  */
 public enum KeyCode {
 

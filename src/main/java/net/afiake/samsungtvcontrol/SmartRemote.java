@@ -10,9 +10,9 @@ import java.util.Arrays;
 import org.apache.commons.codec.binary.Base64;
 
 /**
- * API for controlling Samsung TVs using a socket connection on port 55000.
+ * API for controlling Samsung Smart TVs using a socket connection on port 55000.
  */
-public class SamsungTVControl {
+public class SmartRemote {
 
     // Protocol infomation has been gathered from: http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/
     // TODO: device discovery using http://www.lewisbenge.net/2012/11/13/device-discovery-ssdp-in-windows-8-and-winrt/
@@ -21,12 +21,12 @@ public class SamsungTVControl {
 
     private final String controllerId; // Unique ID which is used at Samsung TV internally to distinguish controllers
     private final String controllerName; // Name for this controller, which is displayed on the television
-    private Socket socket;
-    private OutputStream out;
-    private InputStream in;
+    private final Socket socket;
+    private final OutputStream out;
+    private final InputStream in;
 
     /**
-     * Opens a socket connection to given host (a Samsung Smart TV).
+     * Opens a socket connection to given host (a Samsung Smart TV) and tries to authenticate with the television.
      *
      * @param controllerId a unique ID which is used at the Samsung TV internally to distinguish controllers
      * @param controllerName the name for this controller, which is displayed on the television
@@ -34,7 +34,7 @@ public class SamsungTVControl {
      * @throws IOException there was a problem with the socket connection
      * @throws AuthenticationException the television user denied our control request
      */
-    public SamsungTVControl(String controllerId, String controllerName, String host) throws IOException, AuthenticationException {
+    public SmartRemote(String controllerId, String controllerName, String host) throws IOException, AuthenticationException {
         this.controllerId = controllerId;
         this.controllerName = controllerName;
         this.socket = new Socket(host, PORT);
@@ -92,21 +92,19 @@ public class SamsungTVControl {
 
         // Reader
         do {
-            System.out.println(Integer.toHexString(in.read()));
-            res = new byte[2];
+            res = new byte[1]; // Change to skip or put in ArrayList or something else
             in.read(res);
-            len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
-            System.out.println(len);
-            res = new byte[len];
-            in.read(res);
-            resString = new String(res);
-            System.out.println(resString);
             res = new byte[2];
             in.read(res);
             len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
             res = new byte[len];
             in.read(res);
-            System.out.println(Arrays.toString(res));
+            //resString = new String(res);
+            res = new byte[2];
+            in.read(res);
+            len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
+            res = new byte[len];
+            in.read(res);
         } while (res[0] == 10);
         if (res[0] == 101) {
             throw new AuthenticationException("Authentication timeout or cancelled by user.");
@@ -117,9 +115,9 @@ public class SamsungTVControl {
     }
 
     /**
-     * Sends a keycode over current socket connection. Only works when you are successfully authenticated.
+     * Sends a key code over current socket connection. Only works when you are successfully authenticated.
      *
-     * @param keyCode the keycode to send
+     * @param keyCode the key code to send
      * @throws IOException there was a problem with the socket connection
      */
     public void keyCode(KeyCode keyCode) throws IOException {
@@ -127,9 +125,9 @@ public class SamsungTVControl {
     }
 
     /**
-     * Sends a keycode over current socket connection. Only works when you are successfully authenticated.
+     * Sends a key code over current socket connection. Only works when you are successfully authenticated.
      *
-     * @param keyCode the keycode to send
+     * @param keyCode the key code to send
      * @throws IOException there was a problem with the socket connection
      */
     public void keyCode(String keyCode) throws IOException {
@@ -167,20 +165,20 @@ public class SamsungTVControl {
         out.write(res); // Write byte array to socket
 
         // Reader
-        System.out.println(Integer.toHexString(in.read()));
-        res = new byte[2];
+        /*
+        res = new byte[1];
         in.read(res);
-        len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
-        System.out.println(len);
-        res = new byte[len];
-        in.read(res);
-        resString = new String(res);
-        System.out.println(resString);
         res = new byte[2];
         in.read(res);
         len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
         res = new byte[len];
         in.read(res);
-        System.out.println(Arrays.toString(res));
+        //resString = new String(res);
+        res = new byte[2];
+        in.read(res);
+        len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
+        res = new byte[len];
+        in.read(res);
+        */
     }
 }
