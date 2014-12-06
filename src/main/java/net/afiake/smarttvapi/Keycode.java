@@ -1,9 +1,9 @@
-package net.afiake.samsungtvcontrol;
+package net.afiake.smarttvapi;
 
 /**
- * A list of available key codes, just for easy reference. Can be passed to the {@link SmartRemote#keyCode(KeyCode)} method.
+ * A list of available key codes, just for easy reference. Can be passed to the {@link SmartRemote#keycode(Keycode)} method.
  */
-public enum KeyCode {
+public enum Keycode {
 
     KEY_0,
     KEY_1,

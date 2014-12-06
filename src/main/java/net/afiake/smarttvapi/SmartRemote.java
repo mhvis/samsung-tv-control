@@ -1,4 +1,4 @@
-package net.afiake.samsungtvcontrol;
+package net.afiake.smarttvapi;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import org.apache.commons.codec.binary.Base64;
 
 /**
@@ -30,7 +29,7 @@ public class SmartRemote {
      *
      * @param controllerId a unique ID which is used at the Samsung TV internally to distinguish controllers
      * @param controllerName the name for this controller, which is displayed on the television
-     * @param host the ip-address to connect to
+     * @param host the host to connect to
      * @throws IOException there was a problem with the socket connection
      * @throws AuthenticationException the television user denied our control request
      */
@@ -117,20 +116,20 @@ public class SmartRemote {
     /**
      * Sends a key code over current socket connection. Only works when you are successfully authenticated.
      *
-     * @param keyCode the key code to send
+     * @param keycode the key code to send
      * @throws IOException there was a problem with the socket connection
      */
-    public void keyCode(KeyCode keyCode) throws IOException {
-        keyCode(keyCode.name());
+    public void keycode(Keycode keycode) throws IOException {
+        keycode(keycode.name());
     }
 
     /**
      * Sends a key code over current socket connection. Only works when you are successfully authenticated.
      *
-     * @param keyCode the key code to send
+     * @param keycode the key code to send
      * @throws IOException there was a problem with the socket connection
      */
-    public void keyCode(String keyCode) throws IOException {
+    public void keycode(String keycode) throws IOException {
         String stringText = "iphone.iapp.samsung";
 
         byte[] string; // String byte array
@@ -143,7 +142,7 @@ public class SmartRemote {
         String resString;
 
         string = stringText.getBytes(); // Gathering all byte arrays
-        payload = Base64.encodeBase64(keyCode.getBytes());
+        payload = Base64.encodeBase64(keycode.getBytes());
 
         payload_size = 3 + 2 + payload.length; // Getting sizes
         size = 1 + 2 + string.length + 2 + payload_size;

@@ -1,4 +1,4 @@
-package net.afiake.samsungtvcontrol;
+package net.afiake.smarttvapi;
 
 /**
  * Thrown when the television denied access, we are not allowed to control the television. This happens when the television user denies access
