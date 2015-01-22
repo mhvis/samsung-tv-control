@@ -105,12 +105,17 @@ public class SmartRemote {
             res = new byte[len];
             in.read(res);
         } while (res[0] == 10);
-        if (res[0] == 101) {
-            throw new AuthenticationException("Authentication timeout or cancelled by user.");
+        if (res[0] == 100 && res[2] == 1) {
+            // Access granted! Return connection or something like that.
+            return;
         }
         if (res[0] == 100 && res[2] == 0) {
             throw new AuthenticationException("Access denied! User rejected this controller.");
         }
+        if (res[0] == 101) {
+            throw new AuthenticationException("Authentication timeout or cancelled by user.");
+        }
+        throw new IOException("TV gave unknown response.");
     }
 
     /**
@@ -124,7 +129,7 @@ public class SmartRemote {
     }
 
     /**
-     * Sends a key code over current socket connection. Only works when you are successfully authenticated.
+     * Sends a key code over current socket connection.
      *
      * @param keycode the key code to send
      * @throws IOException there was a problem with the socket connection
