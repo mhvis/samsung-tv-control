@@ -15,8 +15,8 @@ public class SmartRemote {
 
     // Protocol infomation has been gathered from: http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/
     // TODO: device discovery using http://www.lewisbenge.net/2012/11/13/device-discovery-ssdp-in-windows-8-and-winrt/
-
     private static final int PORT = 55000;
+    private static final int SO_TIMEOUT = 60; // Socket timeout in seconds.
 
     private final String controllerId; // Unique ID which is used at Samsung TV internally to distinguish controllers
     private final String controllerName; // Name for this controller, which is displayed on the television
@@ -39,6 +39,7 @@ public class SmartRemote {
         this.socket = new Socket(host, PORT);
         this.out = socket.getOutputStream();
         this.in = socket.getInputStream();
+        socket.setSoTimeout(SO_TIMEOUT * 1000); // Set socket timeout.
         authenticate();
     }
 
@@ -91,6 +92,7 @@ public class SmartRemote {
 
         // Reader
         do {
+            System.out.println("Authentication reader invoked.");
             res = new byte[1]; // Change to skip or put in ArrayList or something else
             in.read(res);
             res = new byte[2];
@@ -170,19 +172,19 @@ public class SmartRemote {
 
         // Reader
         /*
-        res = new byte[1];
-        in.read(res);
-        res = new byte[2];
-        in.read(res);
-        len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
-        res = new byte[len];
-        in.read(res);
-        //resString = new String(res);
-        res = new byte[2];
-        in.read(res);
-        len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
-        res = new byte[len];
-        in.read(res);
-        */
+         res = new byte[1];
+         in.read(res);
+         res = new byte[2];
+         in.read(res);
+         len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
+         res = new byte[len];
+         in.read(res);
+         //resString = new String(res);
+         res = new byte[2];
+         in.read(res);
+         len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
+         res = new byte[len];
+         in.read(res);
+         */
     }
 }
