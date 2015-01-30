@@ -24,8 +24,8 @@ import java.util.Arrays;
 public class SmartRemote {
 
     private final int PORT = 55000;
-    private final int SO_CONNECT_TIMEOUT = 3 * 1000; // Socket connect timeout in milliseconds.
-    private final int SO_READ_TIMEOUT = 1800 * 1000; // Socket read timeout in milliseconds.
+    private final int SO_TIMEOUT = 3 * 1000; // Socket connect and read timeout in milliseconds.
+    private final int SO_AUTHENTICATE_TIMEOUT = 600 * 1000; // Socket read timeout while authenticating (waiting for user response) in milliseconds.
     private final String APP_STRING = "iphone.iapp.samsung";
     private final boolean DEBUG = false;
 
@@ -47,8 +47,8 @@ public class SmartRemote {
      */
     public SmartRemote(String host) throws IOException {
         this.socket = new Socket();
-        socket.setSoTimeout(SO_READ_TIMEOUT);
-        socket.connect(new InetSocketAddress(host, PORT), SO_CONNECT_TIMEOUT);
+        socket.connect(new InetSocketAddress(host, PORT), SO_TIMEOUT);
+        socket.setSoTimeout(SO_TIMEOUT);
         this.out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
@@ -70,7 +70,9 @@ public class SmartRemote {
         writeString(out, getAuthenticationPayload(hostAddress, hostAddress, name));
         out.flush(); // Send authentication.
 
+        socket.setSoTimeout(SO_AUTHENTICATE_TIMEOUT);
         char[] payload = readRelevantMessage(in);
+        socket.setSoTimeout(SO_TIMEOUT);
 
         if (Arrays.equals(payload, ALLOWED)) {
             return TVReply.ALLOWED; // Access granted.
