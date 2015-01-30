@@ -1,190 +1,289 @@
 package net.afiake.smarttvapi;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+
 import org.apache.commons.codec.binary.Base64;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+
 /**
- * API for controlling Samsung Smart TVs using a socket connection on port 55000.
+ * API for controlling Samsung Smart TVs using a socket connection on port 55000. The protocol information has been gathered from
+ * http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/ .
+ *
+ * @author Maarten Visscher
  */
 public class SmartRemote {
 
-    // Protocol infomation has been gathered from: http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/
-    // TODO: device discovery using http://www.lewisbenge.net/2012/11/13/device-discovery-ssdp-in-windows-8-and-winrt/
-    private static final int PORT = 55000;
-    private static final int SO_TIMEOUT = 60; // Socket timeout in seconds.
+    private final int PORT = 55000;
+    private final int SO_CONNECT_TIMEOUT = 3 * 1000; // Socket connect timeout in milliseconds.
+    private final int SO_READ_TIMEOUT = 1800 * 1000; // Socket read timeout in milliseconds.
+    private final String APP_STRING = "iphone.iapp.samsung";
+    private final boolean DEBUG = false;
 
-    private final String controllerId; // Unique ID which is used at Samsung TV internally to distinguish controllers
-    private final String controllerName; // Name for this controller, which is displayed on the television
+    private final char[] ALLOWED = {0x64, 0x00, 0x01, 0x00}; // TV return payload.
+    private final char[] DENIED = {0x64, 0x00, 0x00, 0x00};
+    private final char[] TIMEOUT = {0x65, 0x00};
+//    private final char[] WAIT = {0x0a, 0x00, 0x02, 0x00, 0x00, 0x00}; // Sent when a window popups on TV I think?
+//    private final char[] SKIP = {0x0a, 0x00, 0x01, 0x00, 0x00, 0x00}; // Don't know yet what this means, seems like keep-alive, I skip them.
+
     private final Socket socket;
-    private final OutputStream out;
-    private final InputStream in;
+    private final BufferedWriter out;
+    private final BufferedReader in;
 
     /**
-     * Opens a socket connection to given host (a Samsung Smart TV) and tries to authenticate with the television.
+     * Opens a socket connection to the television.
      *
-     * @param controllerId a unique ID which is used at the Samsung TV internally to distinguish controllers
-     * @param controllerName the name for this controller, which is displayed on the television
-     * @param host the host to connect to
-     * @throws IOException there was a problem with the socket connection
-     * @throws AuthenticationException the television user denied our control request
+     * @param host the host name.
+     * @throws IOException if an I/O error occurs when creating the socket.
      */
-    public SmartRemote(String controllerId, String controllerName, String host) throws IOException, AuthenticationException {
-        this.controllerId = controllerId;
-        this.controllerName = controllerName;
-        this.socket = new Socket(host, PORT);
-        this.out = socket.getOutputStream();
-        this.in = socket.getInputStream();
-        socket.setSoTimeout(SO_TIMEOUT * 1000); // Set socket timeout.
-        authenticate();
+    public SmartRemote(String host) throws IOException {
+        this.socket = new Socket();
+        socket.setSoTimeout(SO_READ_TIMEOUT);
+        socket.connect(new InetSocketAddress(host, PORT), SO_CONNECT_TIMEOUT);
+        this.out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
     /**
-     * Tries to authenticate with the television, has to be run every time when a new socket connection has been made, prior to sending key codes.
+     * Authenticates with the television. Has to be done every time when a new socket connection has been made, prior to sending key codes.
      *
-     * @throws IOException there was a problem with the socket connection
-     * @throws AuthenticationException the television user denied our control request
+     * @param name the name for this controller, which is displayed on the television.
+     * @return the response from the television.
+     * @throws IOException if an I/O error occurs.
      */
-    private void authenticate() throws IOException, AuthenticationException {
-        String stringText = "iphone.iapp.samsung";
+    public TVReply authenticate(String name) throws IOException {
+        String hostAddress = socket.getLocalAddress().getHostAddress();
 
-        byte[] string; // String byte array
-        byte[] payload_ip;
-        byte[] payload_id;
-        byte[] payload_name;
-        int payload_size;
-        int size;
-        ByteBuffer outBuf;
-        byte[] res;
-        short len;
-        String resString;
+        emptyReaderBuffer(in);
 
-        string = stringText.getBytes(); // Gathering all byte arrays
-        payload_ip = Base64.encodeBase64(socket.getLocalAddress().getAddress());
-        payload_id = Base64.encodeBase64(controllerId.getBytes());
-        payload_name = Base64.encodeBase64(controllerName.getBytes());
+        out.write(0x00);
+        writeString(out, APP_STRING);
+        writeString(out, getAuthenticationPayload(hostAddress, hostAddress, name));
+        out.flush(); // Send authentication.
 
-        payload_size = 2 + 2 + payload_ip.length + 2 + payload_id.length + 2 + payload_name.length; // Getting sizes
-        size = 1 + 2 + string.length + 2 + payload_size;
-        outBuf = ByteBuffer.allocateDirect(size); // Allocate buffer using size
-        outBuf.order(ByteOrder.LITTLE_ENDIAN); // Little-endian order for the bytes
-        outBuf.put((byte) 0);
-        outBuf.putShort((short) string.length);
-        outBuf.put(string);
-        outBuf.putShort((short) payload_size);
-        outBuf.put((byte) 100);
-        outBuf.put((byte) 0);
-        outBuf.putShort((short) payload_ip.length);
-        outBuf.put(payload_ip);
-        outBuf.putShort((short) payload_id.length);
-        outBuf.put(payload_id);
-        outBuf.putShort((short) payload_name.length);
-        outBuf.put(payload_name);
+        char[] payload = readRelevantMessage(in);
 
-        outBuf.rewind();
-        res = new byte[outBuf.remaining()]; // Put buffer in 'res' byte array
-        outBuf.get(res);
-        out.write(res); // Write byte array to socket
-
-        // Reader
-        do {
-            System.out.println("Authentication reader invoked.");
-            res = new byte[1]; // Change to skip or put in ArrayList or something else
-            in.read(res);
-            res = new byte[2];
-            in.read(res);
-            len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
-            res = new byte[len];
-            in.read(res);
-            //resString = new String(res);
-            res = new byte[2];
-            in.read(res);
-            len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
-            res = new byte[len];
-            in.read(res);
-        } while (res[0] == 10);
-        if (res[0] == 100 && res[2] == 1) {
-            // Access granted! Return connection or something like that.
-            return;
+        if (Arrays.equals(payload, ALLOWED)) {
+            return TVReply.ALLOWED; // Access granted.
+        } else if (Arrays.equals(payload, DENIED)) {
+            return TVReply.DENIED; // Access denied.
+        } else if (Arrays.equals(payload, TIMEOUT)) {
+            return TVReply.TIMEOUT; // Timeout.
         }
-        if (res[0] == 100 && res[2] == 0) {
-            throw new AuthenticationException("Access denied! User rejected this controller.");
-        }
-        if (res[0] == 101) {
-            throw new AuthenticationException("Authentication timeout or cancelled by user.");
-        }
-        throw new IOException("TV gave unknown response.");
+        throw new IOException("Got unknown response.");
     }
 
     /**
-     * Sends a key code over current socket connection. Only works when you are successfully authenticated.
+     * Sends a key code to TV. Only works when you are successfully authenticated.
      *
-     * @param keycode the key code to send
-     * @throws IOException there was a problem with the socket connection
+     * @param keycode the key code to send.
+     * @throws IOException if an I/O error occurs.
      */
     public void keycode(Keycode keycode) throws IOException {
         keycode(keycode.name());
     }
 
     /**
-     * Sends a key code over current socket connection.
+     * Sends a key code to TV. Only works when you are successfully authenticated.
      *
-     * @param keycode the key code to send
-     * @throws IOException there was a problem with the socket connection
+     * @param keycode the key code to send.
+     * @throws IOException if an I/O error occurs.
      */
     public void keycode(String keycode) throws IOException {
-        String stringText = "iphone.iapp.samsung";
+        emptyReaderBuffer(in);
 
-        byte[] string; // String byte array
-        byte[] payload;
-        int payload_size;
-        int size;
-        ByteBuffer outBuf;
-        byte[] res;
-        short len;
-        String resString;
+        out.write(0x00);
+        writeString(out, APP_STRING);
+        writeString(out, getKeycodePayload(keycode));
+        out.flush(); // Send key code.
 
-        string = stringText.getBytes(); // Gathering all byte arrays
-        payload = Base64.encodeBase64(keycode.getBytes());
+        readMessage(in);
+    }
 
-        payload_size = 3 + 2 + payload.length; // Getting sizes
-        size = 1 + 2 + string.length + 2 + payload_size;
-        outBuf = ByteBuffer.allocateDirect(size); // Allocate buffer using size
-        outBuf.order(ByteOrder.LITTLE_ENDIAN); // Little-endian order for the bytes
-        outBuf.put((byte) 0);
-        outBuf.putShort((short) string.length);
-        outBuf.put(string);
-        outBuf.putShort((short) payload_size);
-        outBuf.put((byte) 0);
-        outBuf.put((byte) 0);
-        outBuf.put((byte) 0);
-        outBuf.putShort((short) payload.length);
-        outBuf.put(payload);
+    /**
+     * Returns the authentication payload.
+     *
+     * @param ip the ip of the controller.
+     * @param id the id of the controller.
+     * @param name the name of the controller.
+     * @return the authentication payload.
+     * @throws IOException if an I/O error occurs.
+     */
+    private String getAuthenticationPayload(String ip, String id, String name) throws IOException {
+        StringWriter writer = new StringWriter();
+        writer.write(0x64);
+        writer.write(0x00);
+        writeBase64(writer, ip);
+        writeBase64(writer, id);
+        writeBase64(writer, name);
+        writer.flush();
+        return writer.toString();
+    }
 
-        outBuf.rewind();
-        res = new byte[outBuf.remaining()]; // Put buffer in 'res' byte array
-        outBuf.get(res);
-        out.write(res); // Write byte array to socket
+    /**
+     * Returns the key code payload.
+     *
+     * @param keycode the key code.
+     * @return the key code payload.
+     * @throws IOException if an I/O error occurs.
+     */
+    private String getKeycodePayload(String keycode) throws IOException {
+        StringWriter writer = new StringWriter();
+        writer.write(0x00);
+        writer.write(0x00);
+        writer.write(0x00);
+        writeBase64(writer, keycode);
+        writer.flush();
+        return writer.toString();
+    }
 
-        // Reader
-        /*
-         res = new byte[1];
-         in.read(res);
-         res = new byte[2];
-         in.read(res);
-         len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
-         res = new byte[len];
-         in.read(res);
-         //resString = new String(res);
-         res = new byte[2];
-         in.read(res);
-         len = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN).getShort();
-         res = new byte[len];
-         in.read(res);
-         */
+    /**
+     * Reads an incoming message or waits for a new one when it is not relevant. I believe non-relevant messages has to do with showing or hiding of
+     * windows on the TV, and start with 0x0a. This method returns the payload of the relevant message.
+     *
+     * @param reader the reader.
+     * @return the payload which was sent with the relevant message.
+     */
+    private char[] readRelevantMessage(Reader reader) throws IOException {
+        char[] payload = readMessage(reader);
+        while (payload[0] == 0x0a) {
+            if (DEBUG) {
+                System.out.println("Payload is non-relevant, waiting for new message.");
+            }
+            payload = readMessage(reader);
+        }
+        return payload;
+    }
+
+    /**
+     * Reads an incoming message from the television and returns the payload.
+     *
+     * @param reader the reader.
+     * @return the payload which was sent with the message.
+     */
+    private char[] readMessage(Reader reader) throws IOException {
+        int first = reader.read();
+        if (first == -1) {
+            throw new IOException("End of stream has been reached (TV could have powered off).");
+        }
+        String response = readString(reader);
+        char[] payload = readCharArray(reader);
+        if (DEBUG) {
+            System.out.println("TV first byte: " + Integer.toHexString(first) + ", response: " + response + ", payload: " + readable(payload));
+        }
+        return payload;
+    }
+
+    /**
+     * Returns a human readable string in hexadecimal of the char array.
+     *
+     * @param charArray the characters to translate.
+     * @return the human readable string.
+     */
+    private String readable(char[] charArray) {
+        String readable = Integer.toHexString(charArray[0]);
+        for (int i = 1; i < charArray.length; i++) {
+            readable += " " + Integer.toHexString(charArray[i]);
+        }
+        return readable;
+    }
+
+    /**
+     * Writes the string length and the string itself to the writer.
+     *
+     * @param writer the writer.
+     * @param string the string to write.
+     * @throws IOException if an I/O error occurs.
+     */
+    private void writeString(Writer writer, String string) throws IOException {
+        writer.write(string.length());
+        writer.write(0x00);
+        writer.write(string);
+    }
+
+    /**
+     * Encodes the string with base64 and writes the result length and the result itself to the writer.
+     *
+     * @param writer the writer.
+     * @param string the string to encode using base64 and write.
+     * @throws IOException if an I/O error occurs.
+     */
+    private void writeBase64(Writer writer, String string) throws IOException {
+        String base64 = new String(Base64.encodeBase64(string.getBytes()));
+        writeString(writer, base64);
+    }
+
+    /**
+     * Reads the next string from the reader.
+     *
+     * @param reader the reader.
+     * @return the string which is read.
+     * @throws IOException if an I/O error occurs.
+     */
+    private String readString(Reader reader) throws IOException {
+        return new String(readCharArray(reader));
+    }
+
+    /**
+     * Reads the next characters from the reader using the length given in the first byte.
+     *
+     * @param reader the reader.
+     * @return the characters which were read.
+     * @throws IOException if an I/O error occurs.
+     */
+    private char[] readCharArray(Reader reader) throws IOException {
+        int length = reader.read();
+        reader.read();
+        char[] charArray = new char[length];
+        reader.read(charArray);
+        return charArray;
+    }
+
+    /**
+     * Reads all messages which are left in the buffer and therefore empties it.
+     *
+     * @param reader the reader.
+     * @throws IOException if an I/O error occurs.
+     */
+    private void emptyReaderBuffer(Reader reader) throws IOException {
+        while (reader.ready()) {
+            readMessage(reader);
+        }
+    }
+
+    /**
+     * This is not implemented and also probably will never be implemented. Blocks the thread until the TV disconnects.
+     */
+    public void blockUntilPoweroff() {
+//        try {
+//            while (!socket.isInputShutdown()) {
+//            }
+//        } catch (SocketTimeoutException e) {
+//            blockUntilPoweroff();
+//        } catch (IOException e) {
+//            System.err.println("IOException while blocking: " + e.getMessage());
+//        }
+    }
+
+    /**
+     * Closes the socket connection. Should always be called at the end of a session.
+     */
+    public void close() {
+        try {
+            socket.close();
+        } catch (IOException e) {
+            if (DEBUG) {
+                System.err.println("IOException when closing socket: " + e.getMessage());
+            }
+        }
     }
 }

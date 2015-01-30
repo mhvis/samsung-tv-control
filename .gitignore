@@ -36,3 +36,4 @@ nb-configuration.xml
 
 # Additions
 .nb-gradle/
+.nb-gradle-properties
