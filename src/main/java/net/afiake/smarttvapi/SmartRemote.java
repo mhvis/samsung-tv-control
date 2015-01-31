@@ -13,6 +13,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -27,7 +28,6 @@ public class SmartRemote {
     private final int SO_TIMEOUT = 3 * 1000; // Socket connect and read timeout in milliseconds.
     private final int SO_AUTHENTICATE_TIMEOUT = 600 * 1000; // Socket read timeout while authenticating (waiting for user response) in milliseconds.
     private final String APP_STRING = "iphone.iapp.samsung";
-    private final boolean DEBUG = false;
 
     private final char[] ALLOWED = {0x64, 0x00, 0x01, 0x00}; // TV return payload.
     private final char[] DENIED = {0x64, 0x00, 0x00, 0x00};
@@ -38,6 +38,8 @@ public class SmartRemote {
     private final Socket socket;
     private final BufferedWriter out;
     private final BufferedReader in;
+    private final boolean debug;
+    private final ArrayList<String> log; // A very simple log which will be filled when debug==true and can be obtained from outside using getLog().
 
     /**
      * Opens a socket connection to the television.
@@ -46,6 +48,19 @@ public class SmartRemote {
      * @throws IOException if an I/O error occurs when creating the socket.
      */
     public SmartRemote(String host) throws IOException {
+        this(host, false);
+    }
+    
+    /**
+     * Opens a socket connection to the television and keeps a simple log when debug is true.
+     *
+     * @param host the host name.
+     * @param debug whether or not to keep a log.
+     * @throws IOException if an I/O error occurs when creating the socket.
+     */
+    public SmartRemote(String host, boolean debug) throws IOException {
+        this.debug = debug;
+        this.log = new ArrayList<>();
         this.socket = new Socket();
         socket.connect(new InetSocketAddress(host, PORT), SO_TIMEOUT);
         socket.setSoTimeout(SO_TIMEOUT);
@@ -65,6 +80,7 @@ public class SmartRemote {
 
         emptyReaderBuffer(in);
 
+        log("Authenticating with host address: " + hostAddress + ", name: " + name + ".");
         out.write(0x00);
         writeString(out, APP_STRING);
         writeString(out, getAuthenticationPayload(hostAddress, hostAddress, name));
@@ -75,12 +91,16 @@ public class SmartRemote {
         socket.setSoTimeout(SO_TIMEOUT);
 
         if (Arrays.equals(payload, ALLOWED)) {
+            log("Authentication response: access granted.");
             return TVReply.ALLOWED; // Access granted.
         } else if (Arrays.equals(payload, DENIED)) {
+            log("Authentication response: access denied.");
             return TVReply.DENIED; // Access denied.
         } else if (Arrays.equals(payload, TIMEOUT)) {
+            log("Authentication response: timeout.");
             return TVReply.TIMEOUT; // Timeout.
         }
+        log("Authentication message is unknown.");
         throw new IOException("Got unknown response.");
     }
 
@@ -103,6 +123,7 @@ public class SmartRemote {
     public void keycode(String keycode) throws IOException {
         emptyReaderBuffer(in);
 
+        log("Sending keycode: " + keycode + ".");
         out.write(0x00);
         writeString(out, APP_STRING);
         writeString(out, getKeycodePayload(keycode));
@@ -158,9 +179,7 @@ public class SmartRemote {
     private char[] readRelevantMessage(Reader reader) throws IOException {
         char[] payload = readMessage(reader);
         while (payload[0] == 0x0a) {
-            if (DEBUG) {
-                System.out.println("Payload is non-relevant, waiting for new message.");
-            }
+            log("Message is not relevant, waiting for new message.");
             payload = readMessage(reader);
         }
         return payload;
@@ -179,9 +198,7 @@ public class SmartRemote {
         }
         String response = readString(reader);
         char[] payload = readCharArray(reader);
-        if (DEBUG) {
-            System.out.println("TV first byte: " + Integer.toHexString(first) + ", response: " + response + ", payload: " + readable(payload));
-        }
+        log("Message: first byte: " + Integer.toHexString(first) + ", response: " + response + ", payload: " + readable(payload));
         return payload;
     }
 
@@ -257,35 +274,56 @@ public class SmartRemote {
      * @throws IOException if an I/O error occurs.
      */
     private void emptyReaderBuffer(Reader reader) throws IOException {
+        log("Emptying reader buffer.");
         while (reader.ready()) {
             readMessage(reader);
         }
     }
 
     /**
-     * This is not implemented and also probably will never be implemented. Blocks the thread until the TV disconnects.
+     * Returns a simple log with for instance TV response payloads as string array, will only be filled when this class is constructed with debug true
+     * (otherwise the array will be empty).
+     *
+     * @return a simple log.
      */
-    public void blockUntilPoweroff() {
-//        try {
-//            while (!socket.isInputShutdown()) {
-//            }
-//        } catch (SocketTimeoutException e) {
-//            blockUntilPoweroff();
-//        } catch (IOException e) {
-//            System.err.println("IOException while blocking: " + e.getMessage());
-//        }
+    public String[] getLog() {
+        return log.toArray(new String[log.size()]);
     }
 
+    /**
+     * Logs a message when debug is true.
+     *
+     * @param message the message to log.
+     */
+    private void log(String message) {
+        if (debug) {
+            String time = (System.currentTimeMillis() % 1000) + ""; // Time is current milliseconds between 0 and 1000.
+            while (time.length() < 3) {
+                time = " " + time;
+            }
+            log.add(time + ". " + message);
+        }
+    }
+
+    /*public void blockUntilPoweroff() {
+     try {
+     while (!socket.isInputShutdown()) {
+     }
+     } catch (SocketTimeoutException e) {
+     blockUntilPoweroff();
+     } catch (IOException e) {
+     System.err.println("IOException while blocking: " + e.getMessage());
+     }
+     }*/
     /**
      * Closes the socket connection. Should always be called at the end of a session.
      */
     public void close() {
+        log("Closing socket connection.");
         try {
             socket.close();
         } catch (IOException e) {
-            if (DEBUG) {
-                System.err.println("IOException when closing socket: " + e.getMessage());
-            }
+            log("IOException when closing connection: " + e.getMessage());
         }
     }
 }
