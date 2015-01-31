@@ -15,4 +15,4 @@ The latest build can be found here: https://github.com/Afiake/smart-tv-api/relea
 
 ## Todo
 * Device discovery: http://www.lewisbenge.net/2012/11/13/device-discovery-ssdp-in-windows-8-and-winrt/
-* Add logging ability.
+* ~~Add logging ability.~~
