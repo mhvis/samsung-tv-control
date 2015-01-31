@@ -50,7 +50,7 @@ public class SmartRemote {
     public SmartRemote(String host) throws IOException {
         this(host, false);
     }
-    
+
     /**
      * Opens a socket connection to the television and keeps a simple log when debug is true.
      *
@@ -130,6 +130,17 @@ public class SmartRemote {
         out.flush(); // Send key code.
 
         readMessage(in);
+    }
+
+    /**
+     * Checks the connection, gives an IOException when a problem arose since last invocation of one of the methods (for instance the TV turned off).
+     * Will not throw an exception on the next invocation after that while the problem will still exist! Therefore, always when an IOException occurs
+     * at one of the methods close() the connection and open a new TV session.
+     *
+     * @throws IOException when a problem arose since last invocation of one of the methods.
+     */
+    public void checkConnection() throws IOException {
+        emptyReaderBuffer(in);
     }
 
     /**
