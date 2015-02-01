@@ -105,7 +105,7 @@ public class SmartRemote {
     }
 
     /**
-     * Sends a key code to TV. Only works when you are successfully authenticated.
+     * Sends a key code to TV, blocks shortly waiting for TV response to check delivery. Only works when you are successfully authenticated.
      *
      * @param keycode the key code to send.
      * @throws IOException if an I/O error occurs.
@@ -115,7 +115,7 @@ public class SmartRemote {
     }
 
     /**
-     * Sends a key code to TV. Only works when you are successfully authenticated.
+     * Sends a key code to TV, blocks shortly waiting for TV response to check delivery. Only works when you are successfully authenticated.
      *
      * @param keycode the key code to send.
      * @throws IOException if an I/O error occurs.
@@ -130,6 +130,32 @@ public class SmartRemote {
         out.flush(); // Send key code.
 
         readMessage(in);
+    }
+
+    /**
+     * Sends a key code to TV in a non-blocking manner, thus it does not check the delivery (use checkConnection() to poll the TV status). Only works
+     * when you are successfully authenticated.
+     *
+     * @param keycode the key code to send.
+     * @throws IOException if an I/O error occurs.
+     */
+    public void keycodeAsync(Keycode keycode) throws IOException {
+        keycodeAsync(keycode.name());
+    }
+    
+    /**
+     * Sends a key code to TV in a non-blocking manner, thus it does not check the delivery (use checkConnection() to poll the TV status). Only works
+     * when you are successfully authenticated.
+     *
+     * @param keycode the key code to send.
+     * @throws IOException if an I/O error occurs.
+     */
+    public void keycodeAsync(String keycode) throws IOException {
+        log("Sending keycode without reading: " + keycode + ".");
+        out.write(0x00);
+        writeString(out, APP_STRING);
+        writeString(out, getKeycodePayload(keycode));
+        out.flush(); // Send key code.
     }
 
     /**
