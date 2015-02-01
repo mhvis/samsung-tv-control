@@ -133,14 +133,13 @@ public class SmartRemote {
     }
 
     /**
-     * Checks the connection, gives an IOException when a problem arose since last invocation of one of the methods (for instance the TV turned off).
-     * Will not throw an exception on the next invocation after that while the problem will still exist! Therefore, always when an IOException occurs
-     * at one of the methods close() the connection and open a new TV session.
+     * Checks the connection by sending an empty key code, does not return anything but instead throws an exception when a problem arose (for instance
+     * the TV turned off).
      *
-     * @throws IOException when a problem arose since last invocation of one of the methods.
+     * @throws IOException if an I/O error occurs.
      */
     public void checkConnection() throws IOException {
-        emptyReaderBuffer(in);
+        keycode("");
     }
 
     /**
@@ -316,16 +315,6 @@ public class SmartRemote {
         }
     }
 
-    /*public void blockUntilPoweroff() {
-     try {
-     while (!socket.isInputShutdown()) {
-     }
-     } catch (SocketTimeoutException e) {
-     blockUntilPoweroff();
-     } catch (IOException e) {
-     System.err.println("IOException while blocking: " + e.getMessage());
-     }
-     }*/
     /**
      * Closes the socket connection. Should always be called at the end of a session.
      */
