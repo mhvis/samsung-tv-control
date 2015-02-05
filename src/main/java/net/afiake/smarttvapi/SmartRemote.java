@@ -165,7 +165,7 @@ public class SmartRemote {
      * @throws IOException if an I/O error occurs.
      */
     public void checkConnection() throws IOException {
-        keycode("");
+        keycode("PING");
     }
 
     /**
