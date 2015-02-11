@@ -26,7 +26,7 @@ public class SmartRemote {
 
     private final int PORT = 55000;
     private final int SO_TIMEOUT = 3 * 1000; // Socket connect and read timeout in milliseconds.
-    private final int SO_AUTHENTICATE_TIMEOUT = 600 * 1000; // Socket read timeout while authenticating (waiting for user response) in milliseconds.
+    private final int SO_AUTHENTICATE_TIMEOUT = 300 * 1000; // Socket read timeout while authenticating (waiting for user response) in milliseconds.
     private final String APP_STRING = "iphone.iapp.samsung";
 
     private final char[] ALLOWED = {0x64, 0x00, 0x01, 0x00}; // TV return payload.
