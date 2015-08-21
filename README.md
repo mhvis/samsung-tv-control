@@ -7,11 +7,11 @@ The protocol information has been gathered from here: http://sc0ty.pl/2012/02/sa
 
 ## Javadoc
 
-Javadoc location: https://afiake.github.io/smart-tv-api/javadoc/
+Javadoc location: https://mhvis.github.io/smart-tv-api/javadoc/
 
 ## Builds
 
-The latest build can be found here: https://github.com/Afiake/smart-tv-api/releases/latest
+The latest build can be found here: https://github.com/mhvis/smart-tv-api/releases/latest
 
 ## Todo
 * Device discovery: http://www.lewisbenge.net/2012/11/13/device-discovery-ssdp-in-windows-8-and-winrt/
