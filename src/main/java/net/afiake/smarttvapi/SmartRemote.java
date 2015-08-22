@@ -69,7 +69,8 @@ public class SmartRemote {
     }
 
     /**
-     * Authenticates with the television. Has to be done every time when a new socket connection has been made, prior to sending key codes.
+     * Authenticates with the television using host IP address for the ip and id parameters. Has to be done every time when a new socket connection
+     * has been made, prior to sending key codes. Blocks while waiting for the television response.
      *
      * @param name the name for this controller, which is displayed on the television.
      * @return the response from the television.
@@ -78,12 +79,26 @@ public class SmartRemote {
     public TVReply authenticate(String name) throws IOException {
         String hostAddress = socket.getLocalAddress().getHostAddress();
 
+        return authenticate(hostAddress, hostAddress, name);
+    }
+
+    /**
+     * Authenticates with the television. Has to be done every time when a new socket connection has been made, prior to sending key codes. Blocks
+     * while waiting for the television response.
+     *
+     * @param ip a parameter for the television.
+     * @param id a parameter for the television.
+     * @param name the name for this controller, which is displayed on the television.
+     * @return the response from the television.
+     * @throws IOException if an I/O error occurs.
+     */
+    public TVReply authenticate(String ip, String id, String name) throws IOException {
         emptyReaderBuffer(in);
 
-        log("Authenticating with host address: " + hostAddress + ", name: " + name + ".");
+        log("Authenticating with ip: " + ip + ", id: " + id + ", name: " + name + ".");
         out.write(0x00);
         writeString(out, APP_STRING);
-        writeString(out, getAuthenticationPayload(hostAddress, hostAddress, name));
+        writeString(out, getAuthenticationPayload(ip, id, name));
         out.flush(); // Send authentication.
 
         socket.setSoTimeout(SO_AUTHENTICATE_TIMEOUT);
@@ -142,7 +157,7 @@ public class SmartRemote {
     public void keycodeAsync(Keycode keycode) throws IOException {
         keycodeAsync(keycode.name());
     }
-    
+
     /**
      * Sends a key code to TV in a non-blocking manner, thus it does not check the delivery (use checkConnection() to poll the TV status). Only works
      * when you are successfully authenticated.
