@@ -20,7 +20,7 @@ See [javadoc](https://mhvis.github.io/samsung-tv-control/javadoc/), short exampl
 ```java
 try {
   SmartRemote remote = new SmartRemote(String address);
-  TVReply reply = remote.authenticate("Cat");
+  TVReply reply = remote.authenticate("Toaster"); // Argument is the device name (displayed on television).
   if (reply == TVReply.ALLOWED) {
     remote.keycode("KEY_INFO");
   }
