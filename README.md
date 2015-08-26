@@ -12,3 +12,19 @@ Javadoc location: https://mhvis.github.io/samsung-tv-control/javadoc/
 ## Builds
 
 The latest build can be found here: https://github.com/mhvis/samsung-tv-control/releases/latest
+
+## Usage
+
+See [javadoc](https://mhvis.github.io/samsung-tv-control/javadoc/), main usage:
+
+```java
+try {
+  SmartRemote remote = new SmartRemote(String address);
+  TVReply reply = remote.authenticate("Cat");
+  if (reply == TVReply.ALLOWED) {
+    remote.keycode("KEY_INFO");
+  }
+} catch (IOException e) {
+  System.err.println(e.getMessage());
+}
+```
