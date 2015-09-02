@@ -69,17 +69,32 @@ public class SmartRemote {
     }
 
     /**
-     * Authenticates with the television using host IP address for the ip and id parameters. Has to be done every time when a new socket connection
-     * has been made, prior to sending key codes. Blocks while waiting for the television response.
+     * Authenticates with the television using host IP address for the ip and id parameters.
      *
      * @param name the name for this controller, which is displayed on the television.
      * @return the response from the television.
      * @throws IOException if an I/O error occurs.
+     * @see SmartRemote#authenticate(java.lang.String, java.lang.String, java.lang.String) authenticate
      */
     public TVReply authenticate(String name) throws IOException {
         String hostAddress = socket.getLocalAddress().getHostAddress();
 
         return authenticate(hostAddress, hostAddress, name);
+    }
+
+    /**
+     * Authenticates with the television using host IP address for the ip parameter.
+     *
+     * @param id a parameter for the television.
+     * @param name the name for this controller, which is displayed on the television.
+     * @return the response from the television.
+     * @throws IOException if an I/O error occurs.
+     * @see SmartRemote#authenticate(java.lang.String, java.lang.String, java.lang.String) authenticate
+     */
+    public TVReply authenticate(String id, String name) throws IOException {
+        String hostAddress = socket.getLocalAddress().getHostAddress();
+
+        return authenticate(hostAddress, id, name);
     }
 
     /**
