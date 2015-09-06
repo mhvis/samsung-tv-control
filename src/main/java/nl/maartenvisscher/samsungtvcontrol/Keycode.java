@@ -1,4 +1,4 @@
-package net.afiake.smarttvapi;
+package nl.maartenvisscher.samsungtvcontrol;
 
 /**
  * A list of available key codes, just for easy reference. Can be passed to the {@link SmartRemote#keycode(Keycode)} method.

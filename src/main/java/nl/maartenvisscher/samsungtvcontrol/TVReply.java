@@ -1,4 +1,4 @@
-package net.afiake.smarttvapi;
+package nl.maartenvisscher.samsungtvcontrol;
 
 /**
  * TV response after authentication.

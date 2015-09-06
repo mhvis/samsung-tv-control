@@ -1,4 +1,4 @@
-package net.afiake.smarttvapi;
+package nl.maartenvisscher.samsungtvcontrol;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -22,7 +22,7 @@ import java.util.Arrays;
  *
  * @author Maarten Visscher
  */
-public class SmartRemote {
+public class SamsungRemote {
 
     private final int PORT = 55000;
     private final int SO_TIMEOUT = 3 * 1000; // Socket connect and read timeout in milliseconds.
@@ -47,7 +47,7 @@ public class SmartRemote {
      * @param host the host name.
      * @throws IOException if an I/O error occurs when creating the socket.
      */
-    public SmartRemote(String host) throws IOException {
+    public SamsungRemote(String host) throws IOException {
         this(host, false);
     }
 
@@ -58,7 +58,7 @@ public class SmartRemote {
      * @param debug whether or not to keep a log.
      * @throws IOException if an I/O error occurs when creating the socket.
      */
-    public SmartRemote(String host, boolean debug) throws IOException {
+    public SamsungRemote(String host, boolean debug) throws IOException {
         this.debug = debug;
         this.log = new ArrayList<>();
         this.socket = new Socket();
