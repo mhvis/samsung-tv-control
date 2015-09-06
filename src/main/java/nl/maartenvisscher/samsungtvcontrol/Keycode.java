@@ -1,7 +1,7 @@
 package nl.maartenvisscher.samsungtvcontrol;
 
 /**
- * A list of available key codes, just for easy reference. Can be passed to the {@link SmartRemote#keycode(Keycode)} method.
+ * A list of available key codes, just for easy reference. Can be passed to the {@link SamsungRemote#keycode(Keycode)} method.
  */
 public enum Keycode {
 

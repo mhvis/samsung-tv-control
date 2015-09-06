@@ -74,7 +74,7 @@ public class SamsungRemote {
      * @param name the name for this controller, which is displayed on the television.
      * @return the response from the television.
      * @throws IOException if an I/O error occurs.
-     * @see SmartRemote#authenticate(java.lang.String, java.lang.String, java.lang.String) authenticate
+     * @see SamsungRemote#authenticate(java.lang.String, java.lang.String, java.lang.String) authenticate
      */
     public TVReply authenticate(String name) throws IOException {
         String hostAddress = socket.getLocalAddress().getHostAddress();
@@ -89,7 +89,7 @@ public class SamsungRemote {
      * @param name the name for this controller, which is displayed on the television.
      * @return the response from the television.
      * @throws IOException if an I/O error occurs.
-     * @see SmartRemote#authenticate(java.lang.String, java.lang.String, java.lang.String) authenticate
+     * @see SamsungRemote#authenticate(java.lang.String, java.lang.String, java.lang.String) authenticate
      */
     public TVReply authenticate(String id, String name) throws IOException {
         String hostAddress = socket.getLocalAddress().getHostAddress();
