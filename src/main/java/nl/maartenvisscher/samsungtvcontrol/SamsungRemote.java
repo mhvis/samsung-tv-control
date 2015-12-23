@@ -12,15 +12,17 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * API for controlling Samsung Smart TVs using a socket connection on port 55000. The protocol information has been gathered from
+ * API for controlling Samsung Smart TVs using a socket connection on port
+ * 55000. The protocol information has been gathered from
  * http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/ .
  *
- * @author Maarten Visscher
+ * @author Maarten Visscher <mail@maartenvisscher.nl>
  */
 public class SamsungRemote {
 
@@ -44,19 +46,50 @@ public class SamsungRemote {
     /**
      * Opens a socket connection to the television.
      *
+     * @param host the host address.
+     * @throws IOException if an I/O error occurs when creating the socket.
+     */
+    public SamsungRemote(InetAddress host) throws IOException {
+        this(host, false);
+    }
+
+    /**
+     * Opens a socket connection to the television and keeps a simple log when
+     * debug is true.
+     *
+     * @param host the host address.
+     * @param debug whether or not to keep a log.
+     * @throws IOException if an I/O error occurs when creating the socket.
+     */
+    public SamsungRemote(InetAddress host, boolean debug) throws IOException {
+        this.debug = debug;
+        this.log = new ArrayList<>();
+        this.socket = new Socket();
+        socket.connect(new InetSocketAddress(host, PORT), SO_TIMEOUT);
+        socket.setSoTimeout(SO_TIMEOUT);
+        this.out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    }
+
+    /**
+     * Opens a socket connection to the television.
+     *
      * @param host the host name.
      * @throws IOException if an I/O error occurs when creating the socket.
+     * @deprecated
      */
     public SamsungRemote(String host) throws IOException {
         this(host, false);
     }
 
     /**
-     * Opens a socket connection to the television and keeps a simple log when debug is true.
+     * Opens a socket connection to the television and keeps a simple log when
+     * debug is true.
      *
      * @param host the host name.
      * @param debug whether or not to keep a log.
      * @throws IOException if an I/O error occurs when creating the socket.
+     * @deprecated
      */
     public SamsungRemote(String host, boolean debug) throws IOException {
         this.debug = debug;
@@ -69,12 +102,15 @@ public class SamsungRemote {
     }
 
     /**
-     * Authenticates with the television using host IP address for the ip and id parameters.
+     * Authenticates with the television using host IP address for the ip and id
+     * parameters.
      *
-     * @param name the name for this controller, which is displayed on the television.
+     * @param name the name for this controller, which is displayed on the
+     * television.
      * @return the response from the television.
      * @throws IOException if an I/O error occurs.
-     * @see SamsungRemote#authenticate(java.lang.String, java.lang.String, java.lang.String) authenticate
+     * @see SamsungRemote#authenticate(java.lang.String, java.lang.String,
+     * java.lang.String) authenticate
      */
     public TVReply authenticate(String name) throws IOException {
         String hostAddress = socket.getLocalAddress().getHostAddress();
@@ -83,13 +119,16 @@ public class SamsungRemote {
     }
 
     /**
-     * Authenticates with the television using host IP address for the ip parameter.
+     * Authenticates with the television using host IP address for the ip
+     * parameter.
      *
      * @param id a parameter for the television.
-     * @param name the name for this controller, which is displayed on the television.
+     * @param name the name for this controller, which is displayed on the
+     * television.
      * @return the response from the television.
      * @throws IOException if an I/O error occurs.
-     * @see SamsungRemote#authenticate(java.lang.String, java.lang.String, java.lang.String) authenticate
+     * @see SamsungRemote#authenticate(java.lang.String, java.lang.String,
+     * java.lang.String) authenticate
      */
     public TVReply authenticate(String id, String name) throws IOException {
         String hostAddress = socket.getLocalAddress().getHostAddress();
@@ -98,16 +137,19 @@ public class SamsungRemote {
     }
 
     /**
-     * Authenticates with the television. Has to be done every time when a new socket connection has been made, prior to sending key codes. Blocks
+     * Authenticates with the television. Has to be done every time when a new
+     * socket connection has been made, prior to sending key codes. Blocks
      * while waiting for the television response.
      *
      * @param ip a parameter for the television.
      * @param id a parameter for the television.
-     * @param name the name for this controller, which is displayed on the television.
+     * @param name the name for this controller, which is displayed on the
+     * television.
      * @return the response from the television.
      * @throws IOException if an I/O error occurs.
      */
-    public TVReply authenticate(String ip, String id, String name) throws IOException {
+    public TVReply authenticate(String ip, String id, String name)
+            throws IOException {
         emptyReaderBuffer(in);
 
         log("Authenticating with ip: " + ip + ", id: " + id + ", name: " + name + ".");
@@ -135,7 +177,8 @@ public class SamsungRemote {
     }
 
     /**
-     * Sends a key code to TV, blocks shortly waiting for TV response to check delivery. Only works when you are successfully authenticated.
+     * Sends a key code to TV, blocks shortly waiting for TV response to check
+     * delivery. Only works when you are successfully authenticated.
      *
      * @param keycode the key code to send.
      * @throws IOException if an I/O error occurs.
@@ -145,7 +188,8 @@ public class SamsungRemote {
     }
 
     /**
-     * Sends a key code to TV, blocks shortly waiting for TV response to check delivery. Only works when you are successfully authenticated.
+     * Sends a key code to TV, blocks shortly waiting for TV response to check
+     * delivery. Only works when you are successfully authenticated.
      *
      * @param keycode the key code to send.
      * @throws IOException if an I/O error occurs.
@@ -163,7 +207,8 @@ public class SamsungRemote {
     }
 
     /**
-     * Sends a key code to TV in a non-blocking manner, thus it does not check the delivery (use checkConnection() to poll the TV status). Only works
+     * Sends a key code to TV in a non-blocking manner, thus it does not check
+     * the delivery (use checkConnection() to poll the TV status). Only works
      * when you are successfully authenticated.
      *
      * @param keycode the key code to send.
@@ -174,7 +219,8 @@ public class SamsungRemote {
     }
 
     /**
-     * Sends a key code to TV in a non-blocking manner, thus it does not check the delivery (use checkConnection() to poll the TV status). Only works
+     * Sends a key code to TV in a non-blocking manner, thus it does not check
+     * the delivery (use checkConnection() to poll the TV status). Only works
      * when you are successfully authenticated.
      *
      * @param keycode the key code to send.
@@ -189,8 +235,9 @@ public class SamsungRemote {
     }
 
     /**
-     * Checks the connection by sending an empty key code, does not return anything but instead throws an exception when a problem arose (for instance
-     * the TV turned off).
+     * Checks the connection by sending an empty key code, does not return
+     * anything but instead throws an exception when a problem arose (for
+     * instance the TV turned off).
      *
      * @throws IOException if an I/O error occurs.
      */
@@ -207,7 +254,8 @@ public class SamsungRemote {
      * @return the authentication payload.
      * @throws IOException if an I/O error occurs.
      */
-    private String getAuthenticationPayload(String ip, String id, String name) throws IOException {
+    private String getAuthenticationPayload(String ip, String id, String name)
+            throws IOException {
         StringWriter writer = new StringWriter();
         writer.write(0x64);
         writer.write(0x00);
@@ -236,8 +284,10 @@ public class SamsungRemote {
     }
 
     /**
-     * Reads an incoming message or waits for a new one when it is not relevant. I believe non-relevant messages has to do with showing or hiding of
-     * windows on the TV, and start with 0x0a. This method returns the payload of the relevant message.
+     * Reads an incoming message or waits for a new one when it is not relevant.
+     * I believe non-relevant messages has to do with showing or hiding of
+     * windows on the TV, and start with 0x0a. This method returns the payload
+     * of the relevant message.
      *
      * @param reader the reader.
      * @return the payload which was sent with the relevant message.
@@ -296,7 +346,8 @@ public class SamsungRemote {
     }
 
     /**
-     * Encodes the string with base64 and writes the result length and the result itself to the writer.
+     * Encodes the string with base64 and writes the result length and the
+     * result itself to the writer.
      *
      * @param writer the writer.
      * @param string the string to encode using base64 and write.
@@ -319,7 +370,8 @@ public class SamsungRemote {
     }
 
     /**
-     * Reads the next characters from the reader using the length given in the first byte.
+     * Reads the next characters from the reader using the length given in the
+     * first byte.
      *
      * @param reader the reader.
      * @return the characters which were read.
@@ -347,7 +399,8 @@ public class SamsungRemote {
     }
 
     /**
-     * Returns a simple log with for instance TV response payloads as string array, will only be filled when this class is constructed with debug true
+     * Returns a simple log with for instance TV response payloads as string
+     * array, will only be filled when this class is constructed with debug true
      * (otherwise the array will be empty).
      *
      * @return a simple log.
@@ -372,7 +425,8 @@ public class SamsungRemote {
     }
 
     /**
-     * Closes the socket connection. Should always be called at the end of a session.
+     * Closes the socket connection. Should always be called at the end of a
+     * session.
      */
     public void close() {
         log("Closing socket connection.");
