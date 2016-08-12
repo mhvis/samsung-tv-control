@@ -1,9 +1,11 @@
 # Samsung TV control
 
-This is a simple Java library/API for controlling a Samsung Smart TV that listens on port 55000.
+This is a simple Java library/API for controlling a Samsung Smart TV over the network that listens on port 55000.
 Samsung TV's built in 2014 and later use encryption and can therefore **not** be controlled by this library!
 
 The protocol information has been gathered from here: http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/
+
+It is not possible to connect to a TV over the network when it is powered off, thus it is not possible to turn on a TV in this manner.
 
 ## Javadoc
 
