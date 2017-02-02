@@ -1,7 +1,7 @@
 # Samsung TV control
 
 This is a simple Java library/API for controlling a Samsung Smart TV over the network that listens on port 55000.
-Samsung TV's built in 2014 and later use encryption and can therefore **not** be controlled by this library!
+Samsung TV's built in 2014 and later use encryption and can therefore **not** be controlled by this library! You can check for this using your model number, it is explained on [this](http://www.samsung.com/uk/support/skp/faq/1052003) page.
 
 The protocol information has been gathered from here: http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/
 
